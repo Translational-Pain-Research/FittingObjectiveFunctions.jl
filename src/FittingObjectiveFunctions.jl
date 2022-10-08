@@ -1,5 +1,10 @@
 module FittingObjectiveFunctions
 
-# Write your package code here.
+
+# Loading the code 
+
+include("Types.jl")
+include("Lsq.jl")
+include("Bayesian.jl")
 
 end
