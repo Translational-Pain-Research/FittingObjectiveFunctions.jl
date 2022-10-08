@@ -1,6 +1,9 @@
-using FittingObjectiveFunctions
-using Test
+include("Setup.jl")
 
 @testset "FittingObjectiveFunctions.jl" begin
-    # Write your tests here.
+   include("FittingData.jl") 
+   include("ModelFunctions.jl") 
+   include("ConsistencyChecks.jl")
+   include("Bayesian.jl")
+   include("Lsq.jl")
 end
