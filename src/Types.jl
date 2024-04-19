@@ -74,19 +74,26 @@ This struct is only a container to check consistency and is not performance rele
 
 **Fields**
 
-* `independent`: Array of data points for the independent variable. 
-* `dependent`: Array of data points for the dependent variable.
-* `errors`: Array of measurement errors of the dependent variables.
-* `distributions`: Distribution for the dependent variable uncertainty. Can be a function or an array of functions (one for each data point). The distributions must have the signature `(y,m,Δy)`, where `y` is the dependent data point, `m` is the result of the model function, given the dependent data point and the parameter, and `Δy` is the error of the dependent data point.
+* `independent`: Array of data points of the independent variable. 
+* `dependent`: Array of data points of the dependent variable.
+* `errors`: Array of measurement errors of the dependent variable.
+* `distributions`: Distribution for the dependent variable uncertainty. Can be a function or an array of functions (one for each data point). 
 
 Elements with the same index belong together, i.e. define a measurement: 
 
 	(independent[i], dependent[i], errors[i], distributions[i])
 
+
 **Constructors**
 
-	FittingData(X,Y;distributions = normal_distribution)
-	FittingData(X,Y,Σ;distributions = normal_distribution)
+	FittingData(X,Y)
+	FittingData(X,Y,ΔY;distributions = normal_distribution)
+
+**Distributions**
+
+The distributions must have the signature `(y,m,Δy)`, where `y` is the dependent data point, `m` is the result of the model function, given the dependent data point and the parameter, and `Δy` is the error of the dependent data point. By default, a normal distribution is used:
+
+	(y,m,Δy) -> exp(-(y-m)^2/(2*Δy^2))/(sqrt(2*pi) * Δy)
 
 """
 mutable struct FittingData

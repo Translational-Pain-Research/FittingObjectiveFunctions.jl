@@ -1,7 +1,7 @@
 name = "FittingObjectiveFunctions"
 uuid = "935aaf18-14c7-4785-87e9-38cf17c1e7c1"
 authors = ["Dominik Tschimmel <dominik.tschimmel.contact@gmail.com> and contributors"]
-version = "0.2.0"
+version = "0.2.1"
 
 [compat]
 julia = "1"
