@@ -74,10 +74,10 @@ This struct is only a container to check consistency and is not performance rele
 
 **Fields**
 
-* `independent`: Array of data points of the independent variable. 
-* `dependent`: Array of data points of the dependent variable.
-* `errors`: Array of measurement errors of the dependent variable.
-* `distributions`: Distribution for the dependent variable uncertainty. Can be a function or an array of functions (one for each data point). 
+* `independent`: Array of data points for the independent variable. 
+* `dependent`: Array of data points for the dependent variable.
+* `errors`: Array of measurement errors for the dependent variable.
+* `distributions`: Distribution(s) for the uncertainty of the dependent variable. Can be a function or an array of functions (one for each data point). 
 
 Elements with the same index belong together, i.e. define a measurement: 
 
@@ -86,15 +86,19 @@ Elements with the same index belong together, i.e. define a measurement:
 
 **Constructors**
 
-	FittingData(X,Y)
-	FittingData(X,Y,ΔY;distributions = normal_distribution)
+```julia
+FittingData(X,Y)
+```
+
+```julia
+FittingData(X,Y,ΔY;distributions = (y,m,Δy) -> exp(-(y-m)^2/(2*Δy^2))/(sqrt(2*pi) * Δy))
+```
 
 **Distributions**
 
-The distributions must have the signature `(y,m,Δy)`, where `y` is the dependent data point, `m` is the result of the model function, given the dependent data point and the parameter, and `Δy` is the error of the dependent data point. By default, a normal distribution is used:
+The distributions must have the signature `(y,m,Δy)`, where `y` is the dependent variable, `m` is the result of the model function and `Δy` is the error of the dependent variable. If the distributions are not specified, a normal distribution is used:
 
 	(y,m,Δy) -> exp(-(y-m)^2/(2*Δy^2))/(sqrt(2*pi) * Δy)
-
 """
 mutable struct FittingData
 	independent::AbstractArray{R,N} where {R,N}
@@ -158,14 +162,14 @@ end
 
 """
 	mutable struct ModelFunctions
-Mutable type to collect model functions (and the respective partial derivatives) to construct objective functions from.
+Mutable type to collect model functions (and the respective partial derivatives) to construct objective functions.
 
 This struct is only a container to check consistency and is not performance relevant, hence the mutability.
 
 **Fields**
 
-* `model`: The model function. Must have the signature `(x,λ)`, where `x` is an independent data point, and `λ` are the parameters (e.g. an array for multiple parameters).
-* `partials`: Array of partial derivative functions (one for each direction). Must have the same signature `(x,λ)` as the model function.
+* `model`: The model function. Must have the signature `(x,λ)`, where `x` is the independent variable, and `λ` is the parameter (array).
+* `partials`: Array of partial derivative functions (one for each parameter array element). Must have the same signature `(x,λ)` as the model function.
 
 
 **Constructor**
@@ -174,11 +178,17 @@ This struct is only a container to check consistency and is not performance rele
 
 **Examples**
 
-	ModelFunctions((x,λ)-> λ*x)	
+```julia-repl
+julia> ModelFunctions((x,λ)-> λ*x)	
+```
 
-	ModelFunctions((x,λ)-> λ*x, partials = [(x,λ)-> x])	
+```julia-repl
+julia> ModelFunctions((x,λ)-> λ*x, partials = [(x,λ)-> x])	
+```
 
-	ModelFunctions((x,λ)-> λ[1]*x+λ[2], partials = [(x,λ)-> x, (x,λ)-> 1])	
+```julia-repl
+julia> ModelFunctions((x,λ)-> λ[1]*x+λ[2], partials = [(x,λ)-> x, (x,λ)-> 1])	
+```
 
 """
 mutable struct ModelFunctions
@@ -220,7 +230,7 @@ end
 
 """
 	consistency_check(fitting_data::FittingData,model::ModelFunctions,λ)
-Test if all functions can be evaluated with the parameter `λ`. Also, test `fitting_data` and `model`, e.g. after mutation. 
+Test if all functions can be evaluated with the parameter (array) `λ`. Also, test `fitting_data` and `model`, e.g. after mutation. 
 """
 function consistency_check(fitting_data::FittingData,model::ModelFunctions,λ)
 	

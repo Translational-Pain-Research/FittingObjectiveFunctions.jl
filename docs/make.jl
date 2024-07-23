@@ -1,6 +1,6 @@
 using Documenter, FittingObjectiveFunctions
 
-makedocs(sitename="FittingObjectiveFunctions", pages = [
+makedocs(sitename="FittingObjectiveFunctions.jl", pages = [
 "FittingObjectiveFunctions"=>"index.md" ,
 "FittingData and ModelFunctions"=>"fitting_data.md",
 "Least squares objective"=>["Background"=>"lsq_background.md","How to implement" => "lsq_implementation.md"],

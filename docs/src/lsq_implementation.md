@@ -1,6 +1,6 @@
 # LSQ: How to implement
 
-Consider the data and model from [Simple-example](@ref):
+Consider the data and model from [Simple example](@ref Simple-example):
 ```@example 1
 using FittingObjectiveFunctions, Plots #hide
 
@@ -13,16 +13,15 @@ model = ModelFunctions((x,λ)-> λ*x)
 nothing #hide
 ```
 
-## LSQ: objective functions
+## Objective functions
 
-The uncertainty-weighted least squares objective function can be obtained as follows:
+Use [`lsq_objective`](@ref) to construct the uncertainty-weighted least squares objective: 
 ```@example 1
 weighted_lsq = lsq_objective(data,model)
-nothing # hide
 ```
-`lsq_objective` returns a function that takes the model parameters `λ` as argument.
+The returned objective function takes the model parameter (array) `λ` as argument `weighted_lsq(λ)`.
 
-To obtain the standard least squares objective, the errors must be set to `1`. Recall the shortened constructor (see [FittingData](@ref)):
+To obtain the standard least squares objective, the errors must be set to `1`, e.g. by using the shortened constructor (see [The `FittingData` struct](@ref The-FittingData-struct)):
 
 ``` @example 1
 data_no_errors = FittingData(X,Y)
@@ -32,40 +31,32 @@ plot!(standard_lsq, label = "standard lsq", xlims = [0,2], xlabel = "λ", ylabel
 ```
 
 
-## LSQ: partial derivatives and gradients
+## [Partial derivatives and gradients](@id lsq_derivatives)
 
-### Examples
-
-Redefine `model` to obtain analytical derivatives (see [ModelFunctions](@ref)):
+To obtain partial derivatives or the gradient of the least squares objective function, the partial derivatives of the model function need to be added to the [`ModelFunctions`](@ref) object (cf. [The `ModelFunctions` struct](@ref The-ModelFunctions-struct)):
 
 ``` @example 1
 model = ModelFunctions((x,λ)->λ*x , partials = [(x,λ)-> x])
+```
+
+The partial derivatives of the least squares objective can be obtained with [`lsq_partials`](@ref)
+``` @example 1
 ∂_weighted_lsq = lsq_partials(data,model)
 ```
+Note that [`lsq_partials`](@ref) returns the partial derivatives as vector of abstract functions with `λ` as argument, even in the 1-dimensional case.
+
 ``` @example 1
 ∂_weighted_lsq[1](1.1)
 ```
-Note that `lsq_partials` returns a vector of abstract functions with `λ` as argument (one for each partial derivative), even in the 1-dimensional case.
 
+The gradient of the least squares objective can be obtained with [`lsq_gradient`](@ref)
 ``` @example 1
-∇_weighted_lsq = lsq_gradient(data,model)
+∇_weighted_lsq = lsq_gradient(data,model) 
 ```
+The returned gradient function has the signature `(grad_vector,λ)`. The argument `grad_vector` must be a vector of appropriate type and length, that can be mutated.
 ``` @example 1
 ∇_weighted_lsq([0.0],1.1) 
 ```
-On the other hand `lsq_gradient` directly returns the gradient function, but with a different signature `(grad_vector,λ)`. The argument `grad_vector` must be a vector of appropriate type and length, that can be mutated.
 
-!!! info "Why mutation for gradient function?"
-	In some optimization algorithms, the gradient function is called multiple times during each iteration. Mutating an array allows to reduce the memory allocation overhead of creating a new gradient array every time.
-
-### Partial derivatives
-
-``` @example 1
-@doc lsq_partials #hide
-```
-
-### Gradient
-
-``` @example 1
-@doc lsq_gradient #hide
-```
+!!! info "Mutation of gradient vector"
+	In some optimization algorithms, the gradient function is called multiple times during each iteration. Mutating an array allows to reduce the memory allocation overhead of creating new gradient arrays.

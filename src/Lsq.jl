@@ -7,15 +7,15 @@ export lsq_objective, lsq_partials, lsq_gradient
 
 """
 	lsq_objective(data::FittingData,model::ModelFunctions)
-Return the least squares objective function `lsq(λ)`.
+Return the least squares objective as function `λ -> lsq(λ)`.
 
 
 **Analytical expression**
 	
-* independent data points `x_i`
-* dependent data points `y_i`
-* errors `Δy_i` (defaulting to 1)
-* model function `m`
+* independent data points ``x_i``
+* dependent data points ``y_i``
+* errors ``\\Delta y_i``
+* model function ``m``
 
 
 ```math
@@ -28,13 +28,13 @@ function lsq_objective(data::FittingData,model::ModelFunctions)
 	# Without explicit errors, the least squares can be calculated with a reduced formula.
 	if ones(length(data.independent)) == data.errors
 		return let X = data.independent, Y = data.dependent, f = model.model
-			@inline function(λ,T::Type = Float64)
+			@inline function(λ)
 				return sum((Y[i]-f(X[i],λ))^2 for i in 1:length(X))
 			end
 		end
 	else
 		return let X = data.independent, Y = data.dependent, Σ = data.errors,  f = model.model
-			@inline function(λ,T::Type = Float64)
+			@inline function(λ)
 				return sum(((Y[i]-f(X[i],λ))/Σ[i])^2 for i in 1:length(X))
 			end
 		end
@@ -58,22 +58,22 @@ end
 
 """
 	lsq_partials(data::FittingData,model::ModelFunctions)
-Return the partial derivatives w.r.t. the parameters `[∂_1 ob(λ),…,∂_n ob(λ)]` of the least squares objective function `ob(λ)`.
+Return the partial derivatives of the least squares objective function `ob(λ)` as array of functions `[λ->∂_1 ob(λ),…,λ->∂_n ob(λ)]` .
 
-* The partial derivatives `(∂_μ m)(x,λ)` of the model function must be specified in the `ModelFunctions` object `model`.
+* The partial derivatives ``\\frac{\\partial}{\\partial \\lambda_\\mu} m(x,\\lambda)`` of the model function must be specified in the [`ModelFunctions`](@ref) object `model`.
 
 
 **Analytical expression**
 	
-* independent data points: `x_i`
-* dependent data points: `y_i`
-* errors: `Δy_i` (defaulting to 1)
-* model function: `m`
-* partial derivatives of model function in `λ`: `∂_μ m`
+* independent data points: ``x_i``
+* dependent data points: ``y_i``
+* errors: ``\\Delta y_i``
+* model function: ``m``
+* partial derivatives of model function in: ``\\frac{\\partial}{\\partial \\lambda_\\mu}m(x,\\lambda)``
 
 
 ```math
-\\partial_\\mu \\text{lsq}(\\lambda) = \\sum_{i=1}^N \\frac{ 2 \\cdot (m(x_i,\\lambda) - y_i) \\cdot (\\partial_\\mu m)((x_i,\\lambda)) }{\\Delta y_i^2}
+ \\frac{\\partial}{\\partial \\lambda_\\mu} \\text{lsq}(\\lambda) = \\sum_{i=1}^N \\frac{ 2 \\cdot (m(x_i,\\lambda) - y_i) \\cdot \\frac{\\partial}{\\partial \\lambda_\\mu} m(x,\\lambda)}{\\Delta y_i^2}
 ```
 """
 function lsq_partials(data::FittingData,model::ModelFunctions)
@@ -129,23 +129,24 @@ end
 
 """
 	lsq_gradient(data::FittingData,model::ModelFunctions)
-Return the gradient function `grad!(gradient,λ)` for the least squares objective function `ob(λ)`.
-The gradient function `grad!` mutates (for performance) and returns the `gradient`. The elements of `gradient` do not matter, but the type and length must fit.
+Return the gradient of the least squares objective function `ob(λ)` as function `(gradient,λ)->grad!(gradient,λ)` .
 
+* The gradient function `grad!` mutates (for performance) and returns the `gradient`. The elements of `gradient` do not matter, but the type and length must fit.
 
-* The partial derivatives `(∂_μ m)(x,λ)` of the model function must be specified in the `ModelFunctions` object `model`.
+* The partial derivatives ``\\frac{\\partial}{\\partial \\lambda_\\mu} m(x,\\lambda)`` of the model function must be specified in the [`ModelFunctions`](@ref) object `model`.
+
 
 **Analytical expression**
 	
-* independent data points: `x_i`
-* dependent data points: `y_i`
-* errors: `Δy_i` (defaulting to 1)
-* model function: `m`
-* partial derivatives of model function in `λ`: `∂_μ m`
+* independent data points: ``x_i``
+* dependent data points: ``y_i``
+* errors: ``\\Delta y_i``
+* model function: ``m``
+* partial derivatives of model function in: ``\\frac{\\partial}{\\partial \\lambda_\\mu}m(x,\\lambda)``
 
 
 ```math
-\\nabla \\text{lsq}(\\lambda) =  \\sum_{\\mu}  \\sum_{i=1}^N \\frac{ 2 \\cdot (m(x_i,\\lambda) - y_i) \\cdot (\\partial_\\mu m)((x_i,\\lambda)) }{\\Delta y_i^2} \\ \\vec{e}_\\mu
+\\nabla \\text{lsq}(\\lambda) =  \\sum_{\\mu}  \\left(\\sum_{i=1}^N \\frac{ 2 \\cdot (m(x_i,\\lambda) - y_i) \\cdot \\frac{\\partial}{\\partial \\lambda_\\mu}m(x,\\lambda) }{\\Delta y_i^2} \\right) \\vec{e}_\\mu
 ```
 """
 function lsq_gradient(data::FittingData,model::ModelFunctions)

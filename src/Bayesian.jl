@@ -15,24 +15,27 @@ end
 
 
 """
-	posterior_objective(data::FittingData, model::Function,distribution::Function, prior = λ-> 1)
-Return the unnormalized posterior density function `p(λ)`.
+	posterior_objective(data::FittingData, 
+		model::Function,distribution::Function, 
+		prior = λ-> 1
+	)
+Return the unnormalized posterior density as function `λ->p(λ)`.
 	
 Using the default prior `λ-> 1`, e.g. py passing only the first two arguments, leads to the likelihood objective for a maximum likelihood fit.
 
 
 **Analytical expression**
 
-* independent data points `x_i`
-* dependent data points `y_i`
-* errors `Δy_i` (defaulting to 1)
-* model function `m`
-* distributions: `p_i`
-* prior distribution: `p_0`
+* independent data points ``x_i``
+* dependent data points ``y_i``
+* errors ``\\Delta y_i``
+* model function ``m``
+* ``y``-uncertainty distributions: ``q_i``
+* prior distribution: ``p_0``
 
 
 ```math
-p(\\lambda) = p_0(\\lambda) \\cdot \\prod_{i=1}^N p_i(y_i,m(x_i,\\lambda),\\Delta y_i)
+p(\\lambda) = p_0(\\lambda) \\cdot \\prod_{i=1}^N q_i(y_i,m(x_i,\\lambda),\\Delta y_i)
 ```
 """
 function posterior_objective(data::FittingData,model::ModelFunctions, prior::Function = uniform_prior)
@@ -53,20 +56,26 @@ end
 
 
 """
-	log_posterior_objective(data::FittingData,model::ModelFunctions, log_prior::Function = log_uniform_prior)
-Return the logarithmic posterior density function `L_p(λ)`. The `model` distributions and `log-prior` are assumed to be already in logarithm form.
+	log_posterior_objective(data::FittingData,
+		model::ModelFunctions, 
+		log_prior::Function = log_uniform_prior
+	)
+
+Return the logarithmic posterior density as function `λ->L_p(λ)`. 
 	
-Using the default prior, e.g. py passing only the first two arguments, leads to the logarithmic likelihood objective for a maximum likelihood fit.
+* The `y`-uncertainty distributions of the [`FittingData`](@ref) object `data` and `log-prior` must be specified in the logarithmic form.
+	
+* Using the default prior, e.g. py passing only the first two arguments, leads to the logarithmic likelihood objective for a maximum likelihood fit.
 
 
 **Analytical expression**
 
-* independent data points `x_i`
-* dependent data points `y_i`
-* errors `Δy_i` (defaulting to 1)
-* model function `m`
-* logarithmic distributions: `L_i`
-* logarithmic prior distribution: `L_0`
+* independent data points ``x_i``
+* dependent data points ``y_i``
+* errors ``\\Delta y_i``
+* model function ``m``
+* logarithmic ``y``-uncertainty distributions: ``L_i``
+* logarithmic prior distribution: ``L_0``
 
 ```math
 L_p(\\lambda) = L_0(\\lambda) + \\sum_{i=1}^N L_i(y_i,m(x_i,\\lambda),\\Delta y_i)
@@ -87,30 +96,35 @@ end
 
 
 """
-	log_posterior_partials(data::FittingData,model::ModelFunctions, log_distribution_derivatives, prior_partials::Union{Nothing,AbstractArray{F,N}} = nothing) where {F <: Function, N}
-Return the partial derivatives w.r.t. the parameters `[∂_1 L_p(λ),…,∂_n L_p(λ)]` of the log-posterior function `L_p(λ)`.
+	log_posterior_partials(data::FittingData,
+		model::ModelFunctions,
+		log_distribution_derivatives, 
+		prior_partials::Union{Nothing,AbstractArray{Function,N}} = nothing
+	) 
 
-* The partial derivatives `(∂_μ m)(x,λ)` of the model function must be specified in the `ModelFunctions` object `model`.
+Return the partial derivatives of the log-posterior distribution `L_p(λ)` as array of functions `[λ->∂_1 L_p(λ),…,λ->∂_n L_p(λ)]`.
 
-* The `log_distribution_derivatives` can either be a function (same derivative for all `i`), or an array of functions `(∂_m L_i)(y,m,Δy)`
+* The partial derivatives ``\\frac{\\partial}{\\partial \\lambda_\\mu} m(x,\\lambda)`` of the model function must be specified in the [`ModelFunctions`](@ref) object `model`.
 
-* The `prior_partials` can either be a nothing (for the log-likelihood), or an array of functions `(∂_μ L_0)(λ)`.
+* `log_distribution_derivatives` can either be a function ``\\frac{\\partial}{\\partial m} L(y,m,\\Delta y)`` (same derivative for all distributions), or an array of functions ``\\left[\\frac{\\partial}{\\partial m} L_1(y,m,\\Delta y),\\ldots,\\frac{\\partial}{\\partial m} L_n(y,m,\\Delta y) \\right]``
+
+* `prior_partials` can either be `nothing` (for the log-likelihood), or an array of functions ``\\left[\\frac{\\partial}{\\partial \\lambda_1} L_0(λ),\\ldots,\\frac{\\partial}{\\partial \\lambda_n} L_0(λ) \\right]``.
 
 **Analytical expression**
 
-* independent data points `x_i`
-* dependent data points `y_i`
-* errors `Δy_i` (defaulting to 1)
-* model function `m`
-* logarithmic distributions: `L_i`
-* logarithmic prior distribution: `L_0`
-* partial derivatives of model function in `λ`: `∂_μ m`
-* partial derivatives of the log-distributions in `m`: `∂_m L_i`
-* partial derivatives of the log-prior in `λ`: `∂_μ L_0`
+* independent data points ``x_i``
+* dependent data points ``y_i``
+* errors ``\\Delta y_i``
+* model function ``m``
+* logarithmic ``y``-uncertainty distributions: ``L_i``
+* logarithmic prior distribution: ``L_0``
+* partial derivatives of model function: ``\\frac{\\partial}{\\partial \\lambda_\\mu} m(x,\\lambda)``
+* partial derivatives of the logarithmic ``y``-uncertainty distributions: ``\\frac{\\partial}{\\partial m} L_i(y,m,\\Delta y)``
+* partial derivatives of the logarithmic prior: ``\\frac{\\partial}{\\partial \\lambda_\\mu} L_0(λ)``
 
 
 ```math
-\\partial_\\mu L_p(\\lambda) = \\partial_\\mu L_0(\\lambda) + \\sum_{i=1}^N  (\\partial_m L_i)(y_i, m(x_i,\\lambda), \\Delta y_i)\\cdot (\\partial_\\mu m)(x_i,\\lambda)
+\\frac{\\partial}{\\partial \\lambda_\\mu} L_p(\\lambda) = \\frac{\\partial}{\\partial \\lambda_\\mu} L_0(\\lambda) + \\sum_{i=1}^N  \\frac{\\partial}{\\partial m} L_i(y_i, m(x_i,\\lambda), \\Delta y_i)\\cdot \\frac{\\partial}{\\partial \\lambda_\\mu} m(x_i,\\lambda)
 ```
 """
 function log_posterior_partials(data::FittingData,model::ModelFunctions, log_distribution_derivatives, prior_partials::Union{Nothing,AbstractArray{F,N}} = nothing) where {F <: Function, N}
@@ -183,31 +197,36 @@ end
 
 
 """
-	log_posterior_gradient(data::FittingData,model::ModelFunctions, log_distribution_derivatives, prior_partials::Union{Nothing,AbstractArray{F,N}} = nothing) where {F <: Function, N}
-Return the gradient function `grad!(gradient,λ)` for the log-posterior function `L_p(λ)`.
-The gradient function `grad!` mutates (for performance) and returns the `gradient`. The elements of `gradient` do not matter, but the type and length must fit.
+	log_posterior_gradient(data::FittingData,
+		model::ModelFunctions, 
+		log_distribution_derivatives, 
+		prior_partials::Union{Nothing,AbstractArray{Function,N}} = nothing
+	) 
+Return the gradient of the log-posterior distribution `L_p(λ)` as function `(gradient,λ)->grad!(gradient,λ)` .
 
-* The partial derivatives `(∂_μ m)(x,λ)` of the model function must be specified in the `ModelFunctions` object `model`.
+* The gradient function `grad!` mutates (for performance) and returns the `gradient`. The elements of `gradient` do not matter, but the type and length must fit.
 
-* The `log_distribution_derivatives` can either be a function (same derivative for all `i`), or an array of functions `(∂_m L_i)(y,m,Δy)`
+* The partial derivatives ``\\frac{\\partial}{\\partial \\lambda_\\mu} m(x,\\lambda)`` of the model function must be specified in the [`ModelFunctions`](@ref) object `model`.
 
-* The `prior_gradient` can either be a nothing (for the log-likelihood), or a gradient mutating function of functions `∇L_0!(gradient,λ)`.
+* `log_distribution_derivatives` can either be a function ``\\frac{\\partial}{\\partial m} L(y,m,\\Delta y)`` (same derivative for all distributions), or an array of functions ``\\left[\\frac{\\partial}{\\partial m} L_1(y,m,\\Delta y),\\ldots,\\frac{\\partial}{\\partial m} L_n(y,m,\\Delta y) \\right]``
+
+* `prior_partials` can either be `nothing` (for the log-likelihood), or an array of functions ``\\left[\\frac{\\partial}{\\partial \\lambda_1} L_0(λ),\\ldots,\\frac{\\partial}{\\partial \\lambda_n} L_0(λ) \\right]``.
 
 **Analytical expression**
 
-* independent data points `x_i`
-* dependent data points `y_i`
-* errors `Δy_i` (defaulting to 1)
-* model function `m`
-* logarithmic distributions: `L_i`
-* logarithmic prior distribution: `L_0`
-* partial derivatives of model function in `λ`: `∂_μ m`
-* partial derivatives of the log-distributions in `m`: `∂_m L_i`
-* resulting/mutated log-prior gradient in `λ`: `∇ L_0`
+* independent data points ``x_i``
+* dependent data points ``y_i``
+* errors ``\\Delta y_i``
+* model function ``m``
+* logarithmic ``y``-uncertainty distributions: ``L_i``
+* logarithmic prior distribution: ``L_0``
+* partial derivatives of model function: ``\\frac{\\partial}{\\partial \\lambda_\\mu} m(x,\\lambda)``
+* partial derivatives of the logarithmic ``y``-uncertainty distributions: ``\\frac{\\partial}{\\partial m} L_i(y,m,\\Delta y)``
+* partial derivatives of the logarithmic prior: ``\\frac{\\partial}{\\partial \\lambda_\\mu} L_0(λ)``
 
 
 ```math
-\\nabla L_p(\\lambda) = \\nabla L_0(\\lambda) + \\sum_{\\mu} \\sum_{i=1}^N  (\\partial_m L_i)(y_i, m(x_i,\\lambda), \\Delta y_i)\\cdot (\\partial_\\mu m)(x_i,\\lambda) \\ \\vec{e}_\\mu
+\\nabla L_p(\\lambda) = \\sum_{\\mu} \\left( \\frac{\\partial}{\\partial \\lambda_\\mu} L_0(\\lambda) + \\sum_{i=1}^N  \\frac{\\partial}{\\partial m} L_i(y_i, m(x_i,\\lambda), \\Delta y_i)\\cdot \\frac{\\partial}{\\partial \\lambda_\\mu} m(x_i,\\lambda) \\right) \\vec{e}_\\mu
 ```
 """
 function log_posterior_gradient(data::FittingData,model::ModelFunctions, log_distribution_derivatives, prior_gradient::Union{Nothing,Function} = nothing)
