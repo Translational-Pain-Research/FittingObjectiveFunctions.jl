@@ -2,7 +2,7 @@
 
 ## About
 
-[`FittingObjectiveFunctions.jl`](https://github.com/AntibodyPackages/FittingObjectiveFunctions.jl) is a lightweight package without dependencies to create objective functions for model fitting. This package does not include optimizers/samplers.
+[`FittingObjectiveFunctions.jl`](https://github.com/Translational-Pain-Research/FittingObjectiveFunctions.jl) is a lightweight package without dependencies to create objective functions for model fitting. This package does not include optimizers/samplers.
 
 
 ## Installation
@@ -12,10 +12,10 @@ The package can be installed with the following commands
 ```julia
 using Pkg
 Pkg.Registry.add()
-Pkg.Registry.add(RegistrySpec(url = "https://github.com/AntibodyPackages/AntibodyPackagesRegistry"))
+Pkg.Registry.add(RegistrySpec(url = "https://github.com/Translational-Pain-Research/Translational-Pain-ResearchRegistry"))
 Pkg.add("FittingObjectiveFunctions")
 ```
-Since the package is not part of the `General` registry the commands install the additional registry `AntibodyPackagesRegistry` first.
+Since the package is not part of the `General` registry the commands install the additional registry `Translational-Pain-ResearchRegistry` first.
 
 After the installation, the package can be used like any other package:
 ```@example 1
